@@ -21,6 +21,18 @@ export interface Quote {
   low: number | null
   prevClose: number | null
   volume: number | null
+  transactionDate: string
+  lastUpdatedOn: string | null
+}
+
+// GTN's realtime/intraday/top-stocks endpoints are 403 Forbidden for this sandbox
+// institution, so quotes come from the history API's latest loaded trading day —
+// which can lag behind the real market by days. Surface that day so the UI never
+// implies this is a live market price when it's actually a stale sandbox close.
+export function quoteAsOfLabel(transactionDate: string): string {
+  const d = new Date(transactionDate)
+  if (Number.isNaN(d.getTime())) return ''
+  return `as of ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} close`
 }
 
 export interface Mover {

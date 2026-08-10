@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpac
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
-import { getTickers, searchSymbols, type TickerDoc } from '../api/marketdata'
+import { getTickers, quoteAsOfLabel, searchSymbols, type TickerDoc } from '../api/marketdata'
 import Card from '../components/Card'
 import ChangeBadge from '../components/ChangeBadge'
 import { useLiveQuotes } from '../hooks/useLiveQuotes'
@@ -104,6 +104,9 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
                   <View style={styles.rowRight}>
                     <Text style={styles.price}>{q?.last != null ? q.last.toFixed(2) : '—'}</Text>
                     <ChangeBadge value={q?.pctChange} />
+                    {q?.transactionDate && (
+                      <Text style={styles.asOf}>{quoteAsOfLabel(q.transactionDate)}</Text>
+                    )}
                   </View>
                 </Card>
               </TouchableOpacity>
@@ -151,5 +154,6 @@ const styles = StyleSheet.create({
   description: { fontSize: 12, color: colors.textSecondary, maxWidth: 220 },
   rowRight: { alignItems: 'flex-end', gap: 2 },
   price: { fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
+  asOf: { fontSize: 10, color: colors.textMuted },
   empty: { textAlign: 'center', color: colors.textMuted, marginTop: spacing.xl },
 })
