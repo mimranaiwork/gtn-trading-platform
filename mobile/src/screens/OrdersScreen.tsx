@@ -21,11 +21,12 @@ import {
   type GtnActionResult,
 } from '../api/trade'
 import { recentOrdersKey, type RecentOrder } from '../store/recentOrders'
+import { getErrorMessage } from '../api/errors'
 import Card from '../components/Card'
 import { colors, radius, spacing } from '../theme/colors'
 
 function ResultBox({ result, error }: { result?: GtnActionResult; error?: unknown }) {
-  if (error) return <Text style={styles.error}>{(error as Error).message}</Text>
+  if (error) return <Text style={styles.error}>{getErrorMessage(error)}</Text>
   if (!result) return null
   const ok = result.status === 'SUCCESS'
   return (
@@ -299,7 +300,7 @@ export default function OrdersScreen() {
           >
             {searchMutation.isPending ? <ActivityIndicator color={colors.white} /> : <Text style={styles.actionBtnText}>Search</Text>}
           </TouchableOpacity>
-          {searchMutation.isError && <Text style={styles.error}>{(searchMutation.error as Error).message}</Text>}
+          {searchMutation.isError && <Text style={styles.error}>{getErrorMessage(searchMutation.error)}</Text>}
           {searchMutation.data && searchMutation.data.length === 0 && (
             <Text style={styles.empty}>No results (or GTN rejected the query — see note above).</Text>
           )}
@@ -337,7 +338,7 @@ export default function OrdersScreen() {
               <Text style={styles.actionBtnText}>List requests</Text>
             )}
           </TouchableOpacity>
-          {exerciseListMutation.isError && <Text style={styles.error}>{(exerciseListMutation.error as Error).message}</Text>}
+          {exerciseListMutation.isError && <Text style={styles.error}>{getErrorMessage(exerciseListMutation.error)}</Text>}
           {exerciseListMutation.data && exerciseListMutation.data.length === 0 && (
             <Text style={styles.empty}>No results (or GTN rejected the query — see note above).</Text>
           )}

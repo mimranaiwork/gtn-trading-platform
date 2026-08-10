@@ -74,44 +74,7 @@ public class MarketDataController : ControllerBase
     [HttpGet("quotes")]
     public async Task<IActionResult> GetQuotes([FromQuery] string keys, CancellationToken ct)
     {
-        var keyList = keys.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        // History has one row per key per trading day; over-fetch and dedupe to the
-        // latest row per key rather than trusting row-count math to land exactly right.
-        var res = await _gtn.MarketDataRequestAsync(
-            HttpMethod.Get,
-            $"history/keys/data?keys={Uri.EscapeDataString(keys)}&rows={keyList.Length * 5}&sort-field=TRANSACTION_DATE&sort-asc=false",
-            ct);
-        if (!res.IsSuccessStatusCode) return await Forward(res);
-
-        var body = await res.Content.ReadAsStringAsync(ct);
-        using var doc = JsonDocument.Parse(body);
-        var docs = doc.RootElement.GetProperty("response").GetProperty("docs");
-
-        var latestByKey = new Dictionary<string, JsonElement>();
-        foreach (var d in docs.EnumerateArray())
-        {
-            var key = d.GetProperty("KEY").GetString()!;
-            if (!latestByKey.ContainsKey(key)) // already sorted newest-first
-                latestByKey[key] = d;
-        }
-
-        var quotes = latestByKey.Values.Select(d => new
-        {
-            key = d.GetProperty("KEY").GetString(),
-            symbol = d.GetProperty("TICKER_ID").GetString(),
-            exchange = d.GetProperty("SOURCE_ID").GetString(),
-            last = d.TryGetProperty("LASTTRADEPRICE", out var v1) ? v1.GetDouble() : (double?)null,
-            change = d.TryGetProperty("CHANGE", out var v2) ? v2.GetDouble() : (double?)null,
-            pctChange = d.TryGetProperty("PCT_CHANGE", out var v3) ? v3.GetDouble() : (double?)null,
-            open = d.TryGetProperty("OPEN", out var v4) ? v4.GetDouble() : (double?)null,
-            high = d.TryGetProperty("HIGH", out var v5) ? v5.GetDouble() : (double?)null,
-            low = d.TryGetProperty("LOW", out var v6) ? v6.GetDouble() : (double?)null,
-            prevClose = d.TryGetProperty("PREV_CLOSED", out var v7) ? v7.GetDouble() : (double?)null,
-            volume = d.TryGetProperty("VOLUME", out var v8) ? v8.GetInt64() : (long?)null,
-            transactionDate = d.GetProperty("TRANSACTION_DATE").GetString(),
-            lastUpdatedOn = d.TryGetProperty("LAST_UPDATED_ON", out var v9) ? v9.GetString() : null,
-        }).ToList(); // materialize before `doc` is disposed — response serialization happens after this method returns
-
+        var quotes = await QuoteFetcher.FetchAsync(_gtn, keys, ct);
         return Ok(new { quotes });
     }
 

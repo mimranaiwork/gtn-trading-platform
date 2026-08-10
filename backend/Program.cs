@@ -104,4 +104,55 @@ app.Map("/ws/trade", async context =>
     }
 });
 
+// GTN's market-data WebSocket (MarketDataWsUrl) is unusable — it throws a real
+// server-side error on auth every time it's tried (confirmed live, different NPE
+// messages on different attempts, same 1011 internal-error category — a bug on GTN's
+// side, not fixable here). Rather than force clients to poll GET /api/marketdata/quotes
+// themselves, this endpoint does the polling once on the server (one shared loop
+// per connection, ~4s interval) and pushes updates over a real WebSocket — clients get
+// a genuine live-push experience even though the upstream source is polled REST.
+app.Map("/ws/quotes", async context =>
+{
+    if (!context.WebSockets.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        return;
+    }
+
+    var keys = context.Request.Query["keys"].ToString();
+    if (string.IsNullOrWhiteSpace(keys))
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        return;
+    }
+
+    var gtn = context.RequestServices.GetRequiredService<GtnApiClient>();
+    using var socket = await context.WebSockets.AcceptWebSocketAsync();
+    var ct = context.RequestAborted;
+
+    // Matches the REST GET /api/marketdata/quotes shape (ASP.NET Core's MVC formatter
+    // camelCases by default) since mobile's Quote interface/parsing is shared between both.
+    var jsonOptions = new System.Text.Json.JsonSerializerOptions
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+
+    try
+    {
+        while (socket.State == WebSocketState.Open && !ct.IsCancellationRequested)
+        {
+            var quotes = await QuoteFetcher.FetchAsync(gtn, keys, ct);
+            var payload = Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(new { quotes }, jsonOptions));
+            await socket.SendAsync(payload, WebSocketMessageType.Text, true, ct);
+            await Task.Delay(TimeSpan.FromSeconds(4), ct);
+        }
+    }
+    catch (OperationCanceledException) { /* client disconnected */ }
+    finally
+    {
+        if (socket.State == WebSocketState.Open)
+            await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "done", CancellationToken.None);
+    }
+});
+
 app.Run();

@@ -6,6 +6,7 @@ import type { RouteProp } from '@react-navigation/native'
 import { useAccount } from '../hooks/useAccount'
 import { getOrderByReference, placeOrder } from '../api/trade'
 import { addRecentOrder, setRecentOrderId } from '../store/recentOrders'
+import { getErrorMessage } from '../api/errors'
 import Card from '../components/Card'
 import { colors, radius, spacing } from '../theme/colors'
 import type { RootTabParamList } from '../navigation/types'
@@ -140,7 +141,7 @@ export default function TradeScreen({ route }: { route: RouteProp<RootTabParamLi
               )}
             </View>
           )}
-          {mutation.isError && <Text style={styles.error}>{(mutation.error as Error).message}</Text>}
+          {mutation.isError && <Text style={styles.error}>{getErrorMessage(mutation.error)}</Text>}
         </Card>
       </ScrollView>
     </SafeAreaView>

@@ -4,9 +4,10 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpac
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
-import { getQuotes, getTickers, searchSymbols, type TickerDoc } from '../api/marketdata'
+import { getTickers, searchSymbols, type TickerDoc } from '../api/marketdata'
 import Card from '../components/Card'
 import ChangeBadge from '../components/ChangeBadge'
+import { useLiveQuotes } from '../hooks/useLiveQuotes'
 import { colors, radius, spacing } from '../theme/colors'
 import type { RootTabParamList } from '../navigation/types'
 
@@ -23,11 +24,7 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
   }, [query])
 
   const { data: tickers } = useQuery({ queryKey: ['wl-tickers', keys], queryFn: () => getTickers(keys) })
-  const { data: quotes, isFetching } = useQuery({
-    queryKey: ['wl-quotes', keys],
-    queryFn: () => getQuotes(keys),
-    refetchInterval: 10_000,
-  })
+  const { connected: liveConnected, quotes } = useLiveQuotes(keys)
 
   const { data: searchResults, isLoading: searching } = useQuery({
     queryKey: ['wl-search', debounced],
@@ -51,7 +48,13 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Watchlist</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Watchlist</Text>
+          <View style={styles.liveBadge}>
+            <View style={[styles.liveDot, { backgroundColor: liveConnected ? colors.success : colors.textMuted }]} />
+            <Text style={styles.liveText}>{liveConnected ? 'Live' : 'Connecting…'}</Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.searchBox}>
@@ -88,7 +91,6 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
           data={keys}
           keyExtractor={(k) => k}
           contentContainerStyle={styles.list}
-          refreshing={isFetching}
           renderItem={({ item: key }) => {
             const t = tickerByKey.get(key)
             const q = quoteByKey.get(key)
@@ -116,7 +118,11 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
-  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
+  liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  liveDot: { width: 7, height: 7, borderRadius: 4 },
+  liveText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
