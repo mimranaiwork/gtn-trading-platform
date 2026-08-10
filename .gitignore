@@ -1,0 +1,26 @@
+## Secrets — never commit real GTN credentials
+backend/appsettings.Development.json
+backend/appsettings.*.Local.json
+**/*.pem
+**/*.der
+frontend/.env
+frontend/.env.local
+
+## .NET
+backend/bin/
+backend/obj/
+
+## Node
+frontend/node_modules/
+frontend/dist/
+mobile/node_modules/
+mobile/.env
+mobile/.expo/
+mobile/android/local.properties
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/app/release/
+
+## OS
+.DS_Store
