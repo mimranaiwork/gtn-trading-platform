@@ -65,6 +65,23 @@ public class OrdersController : ControllerBase
         return await Forward(res);
     }
 
+    /// <summary>
+    /// Looks up an order's real GTN orderId from the orderReferenceId returned by
+    /// POST /api/orders (that's all placeOrder gives you). Amend/cancel need the real
+    /// orderId, not the reference — this closes that gap so the UI can auto-populate
+    /// both fields instead of asking the user to hunt down IDs manually.
+    /// </summary>
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Lookup(
+        [FromQuery] string orderReferenceId, [FromQuery] string securityType = "CS", CancellationToken ct = default)
+    {
+        var res = await _gtn.TradeRequestAsync(
+            HttpMethod.Get,
+            $"fo/v1.2.1/order?orderReferenceId={Uri.EscapeDataString(orderReferenceId)}&securityType={Uri.EscapeDataString(securityType)}",
+            ct: ct);
+        return await Forward(res);
+    }
+
     [HttpGet("search")]
     public async Task<IActionResult> Search(CancellationToken ct)
     {

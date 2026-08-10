@@ -4,8 +4,8 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { SafeAreaView } from 'react-native-safe-area-context'
 import type { RouteProp } from '@react-navigation/native'
 import { useAccount } from '../hooks/useAccount'
-import { placeOrder } from '../api/trade'
-import { addRecentOrder } from '../store/recentOrders'
+import { getOrderByReference, placeOrder } from '../api/trade'
+import { addRecentOrder, setRecentOrderId } from '../store/recentOrders'
 import Card from '../components/Card'
 import { colors, radius, spacing } from '../theme/colors'
 import type { RootTabParamList } from '../navigation/types'
@@ -26,7 +26,7 @@ export default function TradeScreen({ route }: { route: RouteProp<RootTabParamLi
 
   const mutation = useMutation({
     mutationFn: placeOrder,
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       addRecentOrder(queryClient, {
         id: variables.externalOrderId,
         placedAt: Date.now(),
@@ -40,6 +40,19 @@ export default function TradeScreen({ route }: { route: RouteProp<RootTabParamLi
         reason: data.reason,
         orderReferenceId: data.orderReferenceId,
       })
+
+      // placeOrder only returns orderReferenceId — resolve the real orderId
+      // (needed for amend/cancel) right away so the Orders tab can auto-fill it.
+      if (data.orderReferenceId) {
+        try {
+          const details = await getOrderByReference(data.orderReferenceId, variables.securityType)
+          if (details.orderId) {
+            setRecentOrderId(queryClient, variables.accountNumber, variables.externalOrderId, details.orderId)
+          }
+        } catch {
+          // best-effort — the user can still fill amend/cancel in manually
+        }
+      }
     },
   })
 

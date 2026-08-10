@@ -12,6 +12,8 @@ export interface RecentOrder {
   status: string
   reason: string
   orderReferenceId?: string
+  /** Real GTN orderId — resolved async via GET /api/orders/lookup right after placing, not available immediately. */
+  orderId?: string
 }
 
 export const recentOrdersKey = (accountNumber: string) => ['recent-orders', accountNumber] as const
@@ -27,5 +29,12 @@ export const recentOrdersKey = (accountNumber: string) => ['recent-orders', acco
 export function addRecentOrder(queryClient: QueryClient, order: RecentOrder) {
   queryClient.setQueryData<RecentOrder[]>(recentOrdersKey(order.accountNumber), (prev = []) =>
     [order, ...prev].slice(0, 50),
+  )
+}
+
+/** Patches in the real orderId once the async lookup resolves, matched by our local id. */
+export function setRecentOrderId(queryClient: QueryClient, accountNumber: string, id: string, orderId: string) {
+  queryClient.setQueryData<RecentOrder[]>(recentOrdersKey(accountNumber), (prev = []) =>
+    prev.map((o) => (o.id === id ? { ...o, orderId } : o)),
   )
 }

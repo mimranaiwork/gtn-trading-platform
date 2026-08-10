@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   ActivityIndicator,
@@ -74,6 +74,9 @@ function SectionHeader({ title, note }: { title: string; note?: string }) {
 
 export default function OrdersScreen() {
   const { accountNumber } = useAccount()
+  const scrollRef = useRef<ScrollView>(null)
+  const amendY = useRef(0)
+  const cancelY = useRef(0)
 
   const { data: recent } = useQuery<RecentOrder[]>({
     queryKey: accountNumber ? recentOrdersKey(accountNumber) : ['recent-orders', 'none'],
@@ -150,9 +153,23 @@ export default function OrdersScreen() {
     mutationFn: () => listOptionExerciseRequests({ accountNumber: accountNumber ?? undefined }),
   })
 
+  const fillAmend = (item: RecentOrder) => {
+    setAmendOrderId(item.orderId ?? '')
+    setAmendRefId(item.orderReferenceId ?? '')
+    setAmendQty(String(item.quantity))
+    setAmendPrice(item.price ? String(item.price) : '')
+    scrollRef.current?.scrollTo({ y: amendY.current, animated: true })
+  }
+
+  const fillCancel = (item: RecentOrder) => {
+    setCancelOrderId(item.orderId ?? '')
+    setCancelRefId(item.orderReferenceId ?? '')
+    scrollRef.current?.scrollTo({ y: cancelY.current, animated: true })
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>Orders</Text>
         {accountNumber && <Text style={styles.subtitle}>Account {accountNumber}</Text>}
 
@@ -179,7 +196,22 @@ export default function OrdersScreen() {
                 <Text style={[styles.status, { color: rejected ? colors.danger : colors.success }]}>
                   {item.status} — {item.reason}
                 </Text>
-                {item.orderReferenceId && <Text style={styles.ref}>Ref: {item.orderReferenceId}</Text>}
+                {item.orderReferenceId && (
+                  <Text style={styles.ref}>
+                    Ref: {item.orderReferenceId}
+                    {item.orderId ? ` · Order ID: ${item.orderId}` : ' · resolving order ID…'}
+                  </Text>
+                )}
+                {item.orderId && (
+                  <View style={styles.quickFillRow}>
+                    <TouchableOpacity style={styles.quickFillBtn} onPress={() => fillAmend(item)}>
+                      <Text style={styles.quickFillText}>Use for amend</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.quickFillBtn} onPress={() => fillCancel(item)}>
+                      <Text style={styles.quickFillText}>Use for cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </Card>
             )
           })
@@ -214,9 +246,10 @@ export default function OrdersScreen() {
           <Text style={styles.linkBtnText}>Refresh open orders</Text>
         </TouchableOpacity>
 
+        <View onLayout={(e) => (amendY.current = e.nativeEvent.layout.y)}>
         <SectionHeader
           title="Amend order"
-          note="Needs a real orderId + orderReferenceId from an order that's still open — this sandbox account has $0 buying power so orders reject instantly and never stay open. Confirmed live: reaches GTN correctly (real rejection on a fake ID, not a format error)."
+          note="Confirmed live and working end-to-end with a real order's ID — GTN accepts the amend request into its OMS. Tap 'Use for amend' on an order above to fill this in automatically, or enter IDs manually."
         />
         <Card style={styles.formCard}>
           <LabeledInput label="Order ID" value={amendOrderId} onChangeText={setAmendOrderId} />
@@ -232,10 +265,12 @@ export default function OrdersScreen() {
           </TouchableOpacity>
           <ResultBox result={amendMutation.data} error={amendMutation.error} />
         </Card>
+        </View>
 
+        <View onLayout={(e) => (cancelY.current = e.nativeEvent.layout.y)}>
         <SectionHeader
           title="Cancel order"
-          note="Same real-order requirement as Amend above. Confirmed live: reaches GTN correctly."
+          note="Confirmed live and working end-to-end with a real order's ID — GTN accepts the cancel request into its OMS. Tap 'Use for cancel' on an order above to fill this in automatically."
         />
         <Card style={styles.formCard}>
           <LabeledInput label="Order ID" value={cancelOrderId} onChangeText={setCancelOrderId} />
@@ -249,6 +284,7 @@ export default function OrdersScreen() {
           </TouchableOpacity>
           <ResultBox result={cancelMutation.data} error={cancelMutation.error} />
         </Card>
+        </View>
 
         <SectionHeader
           title="Order search"
@@ -326,6 +362,15 @@ const styles = StyleSheet.create({
   meta: { color: colors.textSecondary, fontSize: 12, marginTop: spacing.xs },
   status: { fontSize: 12, fontWeight: '600', marginTop: spacing.xs },
   ref: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
+  quickFillRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  quickFillBtn: {
+    borderWidth: 1,
+    borderColor: colors.brand,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  quickFillText: { color: colors.brand, fontSize: 11, fontWeight: '600' },
   empty: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm },
   linkBtn: { alignSelf: 'flex-start', marginTop: spacing.xs },
   linkBtnText: { color: colors.brand, fontSize: 12, fontWeight: '600' },

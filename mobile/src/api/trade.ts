@@ -27,6 +27,22 @@ export async function placeOrder(order: PlaceOrderRequest): Promise<GtnActionRes
   return data
 }
 
+export interface OrderDetails {
+  status: string
+  reason: string
+  orderId?: string
+  orderNumber?: string
+  orderReferenceId?: string
+  orderStatus?: string
+  orderRejectReason?: string
+}
+
+/** Resolves the real GTN orderId from an orderReferenceId — that's all placeOrder() returns. */
+export async function getOrderByReference(orderReferenceId: string, securityType = 'CS'): Promise<OrderDetails> {
+  const { data } = await apiClient.get('/api/orders/lookup', { params: { orderReferenceId, securityType } })
+  return data
+}
+
 export interface AmendOrderRequest {
   orderId: string
   orderReferenceId: string

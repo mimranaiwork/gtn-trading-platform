@@ -9,7 +9,10 @@ placement have been verified end-to-end against the live sandbox.
 ```
 backend/    .NET 8 Web API — owns the GTN credentials, never exposes them to the browser
 frontend/   React + Vite + TS + Zustand + React Query + Tailwind
+mobile/     Expo React Native (Android) app, same backend
 ```
+
+Full stack breakdown and deployment details: [`TECH_STACK.md`](TECH_STACK.md).
 
 ## How auth works
 
