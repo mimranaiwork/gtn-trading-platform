@@ -54,8 +54,8 @@ export default function WatchlistPanel({
         return (
           <div key={key} className="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-white/5">
             <button onClick={() => onSelect(key)} className="flex flex-1 flex-col items-start text-left">
-              <span className="font-medium">{t?.DISPLAY_TICKER ?? key}</span>
-              <span className="text-xs text-gray-400">{t?.LONG_DESCRIPTION ?? ' '}</span>
+              <span className="font-medium">{t?.displayTicker ?? key}</span>
+              <span className="text-xs text-gray-400">{t?.longDescription ?? ' '}</span>
             </button>
             <div className="flex items-center gap-3">
               <div className="text-right">

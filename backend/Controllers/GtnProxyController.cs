@@ -64,7 +64,7 @@ public class GtnProxyController : ControllerBase
         return new ContentResult
         {
             StatusCode = (int)res.StatusCode,
-            Content = responseBody,
+            Content = JsonCaseConverter.ToCamelCase(responseBody),
             ContentType = res.Content.Headers.ContentType?.ToString() ?? "application/json",
         };
     }

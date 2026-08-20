@@ -65,13 +65,13 @@ export default function MarketSearch() {
 
       <div className="flex max-h-64 flex-col gap-1 overflow-auto">
         {data?.docs.map((d) => (
-          <div key={d.KEY} className="flex items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-white/5">
+          <div key={d.key} className="flex items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-white/5">
             <div>
-              <span className="font-medium">{d.DISPLAY_TICKER}</span>{' '}
-              <span className="text-xs text-gray-400">{d.LONG_DESCRIPTION}</span>
+              <span className="font-medium">{d.displayTicker}</span>{' '}
+              <span className="text-xs text-gray-400">{d.longDescription}</span>
             </div>
             <button
-              onClick={() => addKey(targetList, d.KEY)}
+              onClick={() => addKey(targetList, d.key)}
               className="rounded bg-white/10 px-2 text-xs hover:bg-white/20"
             >
               +

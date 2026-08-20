@@ -1,13 +1,13 @@
 import { apiClient } from './client'
 
 export interface TickerDoc {
-  KEY: string
-  TICKER_ID: string
-  SOURCE_ID: string
-  DISPLAY_TICKER: string
-  LONG_DESCRIPTION: string
-  CURRENCY_ID: string
-  LANGUAGE_ID: string
+  key: string
+  tickerId: string
+  sourceId: string
+  displayTicker: string
+  longDescription: string
+  currencyId: string
+  languageId: string
 }
 
 export interface Quote {
@@ -27,13 +27,13 @@ export interface Quote {
 }
 
 export interface Mover {
-  KEY: string
-  TICKER_ID: string
-  SOURCE_ID: string
-  LASTTRADEPRICE: number
-  CHANGE: number
-  PCT_CHANGE: number
-  VOLUME: number
+  key: string
+  tickerId: string
+  sourceId: string
+  lasttradeprice: number
+  change: number
+  pctChange: number
+  volume: number
 }
 
 export interface Exchange {
@@ -50,8 +50,8 @@ export async function getTickers(keys: string[]): Promise<TickerDoc[]> {
   // Sandbox returns one row per language; keep the English one when available.
   const bySymbol = new Map<string, TickerDoc>()
   for (const doc of docs) {
-    const existing = bySymbol.get(doc.KEY)
-    if (!existing || doc.LANGUAGE_ID === 'EN') bySymbol.set(doc.KEY, doc)
+    const existing = bySymbol.get(doc.key)
+    if (!existing || doc.languageId === 'EN') bySymbol.set(doc.key, doc)
   }
   return [...bySymbol.values()]
 }
@@ -71,8 +71,8 @@ export async function searchSymbols(exchange: string, query: string, rows = 20):
   const docs: TickerDoc[] = data?.response?.docs ?? []
   const bySymbol = new Map<string, TickerDoc>()
   for (const doc of docs) {
-    const existing = bySymbol.get(doc.KEY)
-    if (!existing || doc.LANGUAGE_ID === 'EN') bySymbol.set(doc.KEY, doc)
+    const existing = bySymbol.get(doc.key)
+    if (!existing || doc.languageId === 'EN') bySymbol.set(doc.key, doc)
   }
   return [...bySymbol.values()]
 }
@@ -89,8 +89,8 @@ export async function listSymbols(
   const numFound: number = data?.response?.numFound ?? 0
   const bySymbol = new Map<string, TickerDoc>()
   for (const doc of docs) {
-    const existing = bySymbol.get(doc.KEY)
-    if (!existing || doc.LANGUAGE_ID === 'EN') bySymbol.set(doc.KEY, doc)
+    const existing = bySymbol.get(doc.key)
+    if (!existing || doc.languageId === 'EN') bySymbol.set(doc.key, doc)
   }
   return { docs: [...bySymbol.values()], numFound }
 }

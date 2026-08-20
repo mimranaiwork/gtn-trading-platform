@@ -35,7 +35,7 @@ export const useMarketStore = create<MarketState>((set) => ({
   tickers: {},
   setTickers: (docs) =>
     set((state) => ({
-      tickers: { ...state.tickers, ...Object.fromEntries(docs.map((d) => [d.KEY, d])) },
+      tickers: { ...state.tickers, ...Object.fromEntries(docs.map((d) => [d.key, d])) },
     })),
 
   quotes: {},

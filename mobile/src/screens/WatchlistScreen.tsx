@@ -32,11 +32,11 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
     enabled: debounced.length > 0,
   })
 
-  const tickerByKey = new Map((tickers ?? []).map((t) => [t.KEY, t]))
+  const tickerByKey = new Map((tickers ?? []).map((t) => [t.key, t]))
   const quoteByKey = new Map((quotes ?? []).map((q) => [q.key, q]))
 
   const addToWatchlist = (doc: TickerDoc) => {
-    if (!keys.includes(doc.KEY)) setKeys((prev) => [...prev, doc.KEY])
+    if (!keys.includes(doc.key)) setKeys((prev) => [...prev, doc.key])
     setQuery('')
   }
 
@@ -73,13 +73,13 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
       {debounced.length > 0 ? (
         <FlatList
           data={searchResults ?? []}
-          keyExtractor={(d) => d.KEY}
+          keyExtractor={(d) => d.key}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.searchRow} onPress={() => addToWatchlist(item)}>
               <View>
-                <Text style={styles.symbol}>{item.DISPLAY_TICKER}</Text>
-                <Text style={styles.description} numberOfLines={1}>{item.LONG_DESCRIPTION}</Text>
+                <Text style={styles.symbol}>{item.displayTicker}</Text>
+                <Text style={styles.description} numberOfLines={1}>{item.longDescription}</Text>
               </View>
               <Ionicons name="add-circle-outline" size={22} color={colors.brand} />
             </TouchableOpacity>
@@ -98,8 +98,8 @@ export default function WatchlistScreen({ navigation }: { navigation: BottomTabN
               <TouchableOpacity onPress={() => goTrade(key)}>
                 <Card style={styles.rowCard}>
                   <View>
-                    <Text style={styles.symbol}>{t?.DISPLAY_TICKER ?? key}</Text>
-                    <Text style={styles.description} numberOfLines={1}>{t?.LONG_DESCRIPTION ?? ' '}</Text>
+                    <Text style={styles.symbol}>{t?.displayTicker ?? key}</Text>
+                    <Text style={styles.description} numberOfLines={1}>{t?.longDescription ?? ' '}</Text>
                   </View>
                   <View style={styles.rowRight}>
                     <Text style={styles.price}>{q?.last != null ? q.last.toFixed(2) : '—'}</Text>

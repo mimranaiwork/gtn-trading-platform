@@ -66,11 +66,11 @@ export default function HomeScreen({ navigation }: { navigation: BottomTabNaviga
         <Text style={styles.sectionTitle}>Top gainers · Nasdaq</Text>
         <Card>
           {gainers?.map((m, i) => (
-            <View key={m.KEY} style={[styles.moverRow, i > 0 && styles.moverRowBorder]}>
-              <Text style={styles.moverSymbol}>{m.TICKER_ID}</Text>
+            <View key={m.key} style={[styles.moverRow, i > 0 && styles.moverRowBorder]}>
+              <Text style={styles.moverSymbol}>{m.tickerId}</Text>
               <View style={styles.moverRight}>
-                <Text style={styles.moverPrice}>{m.LASTTRADEPRICE?.toFixed(2)}</Text>
-                <ChangeBadge value={m.PCT_CHANGE} />
+                <Text style={styles.moverPrice}>{m.lasttradeprice?.toFixed(2)}</Text>
+                <ChangeBadge value={m.pctChange} />
               </View>
             </View>
           ))}

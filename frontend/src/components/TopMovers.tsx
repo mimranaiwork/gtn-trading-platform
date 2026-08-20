@@ -18,15 +18,15 @@ function MoversList({ exchange, direction }: { exchange: string; direction: 'gai
   return (
     <div className="flex flex-col gap-1">
       {data?.map((m) => (
-        <div key={m.KEY} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-white/5">
-          <button onClick={() => addKey('stocks', m.KEY)} className="text-left">
-            <span className="font-medium">{m.TICKER_ID}</span>
+        <div key={m.key} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-white/5">
+          <button onClick={() => addKey('stocks', m.key)} className="text-left">
+            <span className="font-medium">{m.tickerId}</span>
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400">{m.LASTTRADEPRICE?.toFixed(2)}</span>
+            <span className="text-gray-400">{m.lasttradeprice?.toFixed(2)}</span>
             <span className={direction === 'gainers' ? 'text-emerald-400' : 'text-rose-400'}>
-              {m.PCT_CHANGE >= 0 ? '+' : ''}
-              {m.PCT_CHANGE?.toFixed(2)}%
+              {m.pctChange >= 0 ? '+' : ''}
+              {m.pctChange?.toFixed(2)}%
             </span>
           </div>
         </div>

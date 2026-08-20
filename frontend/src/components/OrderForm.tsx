@@ -22,8 +22,8 @@ export default function OrderForm({ selectedKey }: { selectedKey: string | null 
         mutation.mutate({
           externalOrderId: `ui-${Date.now()}`,
           accountNumber,
-          symbol: ticker.TICKER_ID,
-          exchange: ticker.SOURCE_ID,
+          symbol: ticker.tickerId,
+          exchange: ticker.sourceId,
           quantity,
           orderType: price === '' ? '1' : '2', // 1 = market, 2 = limit
           orderSide: side,
@@ -35,7 +35,7 @@ export default function OrderForm({ selectedKey }: { selectedKey: string | null 
         })
       }}
     >
-      <h3 className="text-lg font-semibold">{ticker.DISPLAY_TICKER} — {ticker.LONG_DESCRIPTION}</h3>
+      <h3 className="text-lg font-semibold">{ticker.displayTicker} — {ticker.longDescription}</h3>
 
       <label className="flex flex-col gap-1 text-sm">
         Account number

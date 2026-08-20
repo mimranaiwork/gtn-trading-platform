@@ -1,12 +1,12 @@
 import { apiClient } from './client'
 
 export interface TickerDoc {
-  KEY: string
-  TICKER_ID: string
-  SOURCE_ID: string
-  DISPLAY_TICKER: string
-  LONG_DESCRIPTION: string
-  LANGUAGE_ID: string
+  key: string
+  tickerId: string
+  sourceId: string
+  displayTicker: string
+  longDescription: string
+  languageId: string
 }
 
 export interface Quote {
@@ -36,18 +36,18 @@ export function quoteAsOfLabel(transactionDate: string): string {
 }
 
 export interface Mover {
-  KEY: string
-  TICKER_ID: string
-  SOURCE_ID: string
-  LASTTRADEPRICE: number
-  PCT_CHANGE: number
+  key: string
+  tickerId: string
+  sourceId: string
+  lasttradeprice: number
+  pctChange: number
 }
 
 function dedupeByKey(docs: TickerDoc[]): TickerDoc[] {
   const byKey = new Map<string, TickerDoc>()
   for (const d of docs) {
-    const existing = byKey.get(d.KEY)
-    if (!existing || d.LANGUAGE_ID === 'EN') byKey.set(d.KEY, d)
+    const existing = byKey.get(d.key)
+    if (!existing || d.languageId === 'EN') byKey.set(d.key, d)
   }
   return [...byKey.values()]
 }

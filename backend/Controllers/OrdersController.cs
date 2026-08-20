@@ -119,7 +119,7 @@ public class OrdersController : ControllerBase
         return new ContentResult
         {
             StatusCode = (int)res.StatusCode,
-            Content = body,
+            Content = JsonCaseConverter.ToCamelCase(body),
             ContentType = "application/json"
         };
     }

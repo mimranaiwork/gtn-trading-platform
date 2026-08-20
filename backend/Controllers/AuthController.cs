@@ -49,7 +49,7 @@ public class AuthController : ControllerBase
 
         var response = await client.SendAsync(request, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
-        return new ContentResult { StatusCode = (int)response.StatusCode, Content = body, ContentType = "application/json" };
+        return new ContentResult { StatusCode = (int)response.StatusCode, Content = JsonCaseConverter.ToCamelCase(body), ContentType = "application/json" };
     }
 
     [HttpPost("refresh")]
@@ -65,6 +65,6 @@ public class AuthController : ControllerBase
 
         var response = await client.SendAsync(request, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
-        return new ContentResult { StatusCode = (int)response.StatusCode, Content = body, ContentType = "application/json" };
+        return new ContentResult { StatusCode = (int)response.StatusCode, Content = JsonCaseConverter.ToCamelCase(body), ContentType = "application/json" };
     }
 }
