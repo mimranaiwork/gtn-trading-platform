@@ -2,9 +2,30 @@ using System.Net.WebSockets;
 using System.Text;
 using GtnTrading.Api;
 using GtnTrading.Api.Services;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
+using Serilog;
+using Serilog.Events;
+
+// Errors/warnings (real exceptions plus GTN request failures logged by GtnApiClient)
+// go to logs/errors-.log so they survive past whatever's in the console/Render's log
+// tail. Console keeps everything at Information+ for normal request tracing.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/errors-.log",
+        restrictedToMinimumLevel: LogEventLevel.Warning,
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        shared: true)
+    .CreateLogger();
+
+try
+{
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -44,6 +65,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Catches anything that escapes a controller/middleware unhandled, logs it to
+// logs/errors-.log with full stack trace, and returns a plain JSON 500 instead of
+// crashing the request or leaking a stack trace to the client.
+app.UseExceptionHandler(errApp => errApp.Run(async context =>
+{
+    var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+    Log.Error(error, "Unhandled exception on {Method} {Path}", context.Request.Method, context.Request.Path);
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsync("""{"error":"Internal Server Error"}""");
+}));
 
 app.UseHttpsRedirection();
 app.UseCors(FrontendCors);
@@ -156,3 +189,13 @@ app.Map("/ws/quotes", async context =>
 });
 
 app.Run();
+
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

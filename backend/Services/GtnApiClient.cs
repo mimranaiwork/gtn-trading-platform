@@ -11,8 +11,9 @@ public class GtnApiClient
     private readonly HttpClient _marketData;
     private readonly GtnAuthService _auth;
     private readonly GtnOptions _options;
+    private readonly ILogger<GtnApiClient> _logger;
 
-    public GtnApiClient(IHttpClientFactory factory, GtnAuthService auth, IOptions<GtnOptions> options)
+    public GtnApiClient(IHttpClientFactory factory, GtnAuthService auth, IOptions<GtnOptions> options, ILogger<GtnApiClient> logger)
     {
         _options = options.Value;
         _trade = factory.CreateClient();
@@ -20,6 +21,7 @@ public class GtnApiClient
         _marketData = factory.CreateClient();
         _marketData.BaseAddress = new Uri(_options.MarketDataBaseUrl.TrimEnd('/') + "/");
         _auth = auth;
+        _logger = logger;
     }
 
     public async Task<HttpResponseMessage> TradeRequestAsync(HttpMethod method, string path, object? jsonBody = null, CancellationToken ct = default)
@@ -31,7 +33,9 @@ public class GtnApiClient
         if (jsonBody is not null)
             request.Content = JsonContent.Create(jsonBody);
 
-        return await _trade.SendAsync(request, ct);
+        var response = await _trade.SendAsync(request, ct);
+        await LogIfError(response, method, path, ct);
+        return response;
     }
 
     public async Task<HttpResponseMessage> MarketDataRequestAsync(HttpMethod method, string path, CancellationToken ct = default)
@@ -41,7 +45,9 @@ public class GtnApiClient
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Add("Throttle-Key", _options.AppKey);
 
-        return await _marketData.SendAsync(request, ct);
+        var response = await _marketData.SendAsync(request, ct);
+        await LogIfError(response, method, path, ct);
+        return response;
     }
 
     /// <summary>Generic authenticated forward for any GTN path/method/body — backs GtnProxyController.</summary>
@@ -59,6 +65,20 @@ public class GtnApiClient
         }
 
         var client = marketData ? _marketData : _trade;
-        return await client.SendAsync(request, ct);
+        var response = await client.SendAsync(request, ct);
+        await LogIfError(response, method, pathAndQuery, ct);
+        return response;
+    }
+
+    // GTN's error responses (401/403/400 from bad params, missing entitlements, etc.)
+    // are the actual "errors" this app hits most often — far more than unhandled C#
+    // exceptions — so they're worth their own log line. ReadAsStringAsync buffers the
+    // content, so controllers can still read the body afterward.
+    private async Task LogIfError(HttpResponseMessage response, HttpMethod method, string path, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode) return;
+        var body = await response.Content.ReadAsStringAsync(ct);
+        _logger.LogWarning("GTN request failed: {Method} {Path} -> {StatusCode} {Body}",
+            method, path, (int)response.StatusCode, body);
     }
 }
