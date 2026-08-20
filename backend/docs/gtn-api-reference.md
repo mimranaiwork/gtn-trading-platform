@@ -25,9 +25,18 @@ For the live WebSocket protocol (trade event push), see
 > **Handled internally — don't call these through the proxy.** `GtnAuthService`
 > already does institution-level auth/refresh automatically for every other proxied
 > call. Listed here (with a real captured example) only for reference. "Get Customer
-> Token" / "Customer Token Refresh" (customer-level, not institution-level auth) are
-> the one pair from this section not wired up anywhere — go through the proxy if you
-> need those.
+> Token" / "Customer Token Refresh" (customer-level, not institution-level auth) *are*
+> wired up — as dedicated endpoints, not through the proxy:
+>
+> - `POST /api/auth/login` — body `{"customerNumber": "..."}`. The backend fetches its
+>   own institution token server-side and injects it, so the caller never needs one.
+> - `POST /api/auth/refresh` — body `{"refreshToken": "..."}`, from a prior login's
+>   response.
+>
+> Both return GTN's raw token response (`accessToken`, `refreshToken`,
+> `accessTokenExpiresAt`, etc., camelCase). The `accessToken` from login is what
+> `PortfolioController`'s valuation endpoints require as `Authorization: Bearer
+> <token>` — see [Account Portfolio](#account-portfolio) below.
 
 ### Authenticate
 
