@@ -38,6 +38,21 @@ public class GtnApiClient
         return response;
     }
 
+    // Some GTN Trade endpoints (account valuation) explicitly reject the institution-level
+    // server token — "This API only supports for customer token" — so this bypasses
+    // GtnAuthService entirely and uses whatever token the caller already obtained from
+    // POST /api/auth/login instead.
+    public async Task<HttpResponseMessage> TradeRequestWithTokenAsync(HttpMethod method, string path, string customerToken, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(method, path.TrimStart('/'));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", customerToken);
+        request.Headers.Add("Throttle-Key", _options.AppKey);
+
+        var response = await _trade.SendAsync(request, ct);
+        await LogIfError(response, method, path, ct);
+        return response;
+    }
+
     public async Task<HttpResponseMessage> MarketDataRequestAsync(HttpMethod method, string path, CancellationToken ct = default)
     {
         var token = await _auth.GetAccessTokenAsync(ct);
