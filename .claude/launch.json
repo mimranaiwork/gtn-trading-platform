@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5195"],
       "port": 5195
+    },
+    {
+      "name": "tcom-portal-v2",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/imac/Desktop/api/ajc/tcom-portal-v2", "start"],
+      "port": 3000
     }
   ]
 }

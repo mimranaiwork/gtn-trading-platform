@@ -60,7 +60,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCors, policy =>
     {
-        policy.WithOrigins(builder.Configuration["Frontend:Origin"] ?? "http://localhost:5173")
+        // Comma-separated so multiple frontends (the standalone GTN web app, and
+        // tcom-portal-v2's new US-market section, which calls this backend directly —
+        // see services/gtn/index.js in tcom-portal-v2, not through its Ocelot gateway)
+        // can all be allow-listed without redeploying for every new consumer.
+        var origins = (builder.Configuration["Frontend:Origin"] ?? "http://localhost:5173")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
