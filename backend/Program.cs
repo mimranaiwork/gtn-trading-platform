@@ -8,13 +8,21 @@ using Serilog;
 using Serilog.Events;
 
 // Errors/warnings (real exceptions plus GTN request failures logged by GtnApiClient)
-// go to logs/errors-.log so they survive past whatever's in the console/Render's log
-// tail. Console keeps everything at Information+ for normal request tracing.
+// go to <app>/logs/errors-.log so they survive past whatever's in the console/Render's
+// log tail. Console keeps everything at Information+ for normal request tracing.
+//
+// Path is pinned to AppContext.BaseDirectory rather than left as a bare relative
+// string: this runs before WebApplication.CreateBuilder(), and under IIS in-process
+// hosting the process's working directory at this point isn't reliably the app's own
+// folder (it can be IIS's worker directory, e.g. C:\Windows\System32\inetsrv) — a
+// relative path here would silently write the log somewhere else, or fail silently
+// with no error since Serilog swallows sink write failures by default.
+var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
     .WriteTo.Console()
-    .WriteTo.File("logs/errors-.log",
+    .WriteTo.File(Path.Combine(logsDir, "errors-.log"),
         restrictedToMinimumLevel: LogEventLevel.Warning,
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 14,
