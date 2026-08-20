@@ -60,7 +60,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// Independent of ASPNETCORE_ENVIRONMENT so Swagger can be turned on for an internal
+// IIS deployment (set EnableSwagger=true in appsettings.Production.json or as an IIS
+// environment variable) without having to run the whole app in Development mode.
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("EnableSwagger"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
