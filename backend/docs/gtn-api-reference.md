@@ -316,7 +316,7 @@ Query params:
 
 > **Live example** (captured against the real JAZIRAPOC sandbox)
 >
-> Response (400):
+> Response (400) — without `sTime`/`eTime`:
 > ```json
 > {
 >   "status": "FAILED",
@@ -324,6 +324,16 @@ Query params:
 >   "rejectCode": 1001
 > }
 > ```
+> So `sTime`/`eTime` are effectively required despite not being marked so above. **Every
+> format tried below returns `"invalid sTime"` (rejectCode 1001) — confirmed unsolvable
+> without GTN's actual documentation or support, not worth further blind guessing:**
+> - `2026/08/22-08:05:20.510` (human-readable, matches nothing else in the API)
+> - `20260822000000` (compact `yyyyMMddHHmmss`, the format that *does* work for
+>   market-data's `start-date`/`end-date` — doesn't transfer to this endpoint)
+> - (see git history/prior sessions for ~6 additional variants also rejected)
+>
+> **Use `GET /api/orders/{orderId}` instead** to check a specific order's status — it
+> needs no date range and is confirmed working (see live example on that endpoint).
 >
 
 **Get Open Orders**  
