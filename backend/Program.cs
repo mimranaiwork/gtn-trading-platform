@@ -37,7 +37,31 @@ builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    // Lets Swagger's Authorize button attach "Authorization: Bearer <token>" to every
+    // request — needed for the 3 portfolio valuation endpoints, which read the customer
+    // token manually from the header (they're not behind real ASP.NET Core auth
+    // middleware) rather than via [FromHeader], so Swagger otherwise has no field for it.
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "Paste the accessToken from POST /api/auth/login here (no 'Bearer ' prefix needed).",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddOptions<GtnOptions>()
     .Bind(builder.Configuration.GetSection(GtnOptions.SectionName))
