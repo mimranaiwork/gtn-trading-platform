@@ -148,3 +148,37 @@ Two response types are plain text (`AUTHENTICATION SUCCESS`, `check message`,
 `authenticate first`) rather than JSON — don't assume every frame is `JSON.parse`-able;
 the frontend's `useTradeStream` hook currently displays raw frame text for exactly this
 reason rather than parsing every message as JSON.
+
+---
+
+# Market Data WebSocket — confirmed blocked by entitlement, not a bug
+
+`wss://sandbox.globaltradingnetwork.com/market-data/websocket` (no sub-path) throws a
+real **server-side crash** on auth — confirmed twice independently, different exception
+message each time (`AppContext.jsLogger`-related NPE once, `this.readLines is null`
+another time). Genuinely a bug in GTN's own server, not fixable client-side. This is why
+`/ws/quotes` exists on our backend — it polls the REST market-data endpoint internally
+and re-broadcasts over our own WebSocket, entirely sidestepping GTN's broken one.
+
+**Update**: a different sub-path exists — `wss://sandbox.globaltradingnetwork.com/market-data/websocket/price`
+— which does **not** crash. Sending the same `{"token": "<access token>"}` auth frame
+gets a clean, well-formed rejection instead of a crash:
+
+```json
+{"timestamp":"2026-08-22T10:13:06.423Z","error":"Forbidden","status":"403","message":"Service not allowed","errorCode":"403001"}
+```
+
+followed by a graceful close (code 1000, not the 1011 internal-error the base path
+gives). This confirms `/price` is a real, properly-implemented endpoint — but this
+JAZIRAPOC sandbox institution isn't entitled to use it. Same class of limitation as
+`realtime`, `intraday`, `top-stocks`, and `symbol-search` (all confirmed `403 Forbidden`
+for this institution) — needs GTN to grant the entitlement, not a code fix.
+
+The intended subscribe message (per GTN's own protocol, never reached since auth itself
+is rejected) would have been:
+```json
+{"RT": "sub", "MT": "p", "SYMS": ["NSDQ~AAPL", "NSDQ~MSFT"]}
+```
+Worth retrying end-to-end (auth → subscribe → live price push) once/if this entitlement
+is granted — the plumbing (`/ws/quotes`'s replacement) would need `RT`/`MT`/`SYMS` framing
+instead of the REST-polling bridge currently in place.
