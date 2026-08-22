@@ -82,8 +82,15 @@ public class OrdersController : ControllerBase
         return await Forward(res);
     }
 
+    /// <summary>Params below exist purely so Swagger renders input fields — the actual
+    /// forward uses the raw query string, so any param GTN documents works even if not
+    /// listed here explicitly.</summary>
     [HttpGet("search")]
-    public async Task<IActionResult> Search(CancellationToken ct)
+    public async Task<IActionResult> Search(
+        [FromQuery] string? customerNumber, [FromQuery] string? cashAccountNumber, [FromQuery] string? accountNumber,
+        [FromQuery] string? exchange, [FromQuery] string? symbol, [FromQuery] string? orderId,
+        [FromQuery] string? orderStatus, [FromQuery] int? orderSide, [FromQuery] string? sTime, [FromQuery] string? eTime,
+        CancellationToken ct)
     {
         var query = Request.QueryString.Value ?? "";
         var res = await _gtn.TradeRequestAsync(HttpMethod.Get, $"fo/v1.2.1/orders/search{query}", ct: ct);
@@ -91,7 +98,11 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("open")]
-    public async Task<IActionResult> Open(CancellationToken ct)
+    public async Task<IActionResult> Open(
+        [FromQuery] string? customerNumber, [FromQuery] string? cashAccountNumber, [FromQuery] string? accountNumber,
+        [FromQuery] string? symbol, [FromQuery] string? exchange, [FromQuery] int? orderSide, [FromQuery] string? orderId,
+        [FromQuery] string? sDate, [FromQuery] string? eDate, [FromQuery] int? pageNo, [FromQuery] int? pageWidth,
+        [FromQuery] string securityType = "CS", CancellationToken ct = default)
     {
         var query = Request.QueryString.Value ?? "";
         var res = await _gtn.TradeRequestAsync(HttpMethod.Get, $"fo/v1.2.1/orders/open{query}", ct: ct);
@@ -106,7 +117,10 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("exercise-requests")]
-    public async Task<IActionResult> ExerciseRequests(CancellationToken ct)
+    public async Task<IActionResult> ExerciseRequests(
+        [FromQuery] string? referenceId, [FromQuery] string? customerNumber, [FromQuery] string? accountNumber,
+        [FromQuery] string? symbol, [FromQuery] string? requestStatus, [FromQuery] string? startDate,
+        [FromQuery] string? endDate, [FromQuery] int? pageNo, [FromQuery] int? pageWidth, CancellationToken ct)
     {
         var query = Request.QueryString.Value ?? "";
         var res = await _gtn.TradeRequestAsync(HttpMethod.Get, $"fo/v1.2.1/exercise/options/requests{query}", ct: ct);
